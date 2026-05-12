@@ -1,0 +1,31 @@
+# --- Python & System ---
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.vscode/
+.env
+
+# --- Data & Large Storage (The 256GB Drive) ---
+# If you create a symbolic link (shortcut) to your data drive:
+/data/
+/ptl_weights/
+/datasets/
+
+# Ignore all common large file formats just in case
+*.csv
+*.json
+*.parquet
+*.npy
+*.npz
+
+# --- PyTorch Lightning Specific ---
+# PTL default logging folder
+lightning_logs/
+# Checkpoints and weight files
+*.ckpt
+*.pt
+*.pth
+*.h5
+# Tensorboard/WandB logs
+runs/
+wandb/
