@@ -29,3 +29,5 @@ lightning_logs/
 # Tensorboard/WandB logs
 runs/
 wandb/
+# execution files
+*.sh
