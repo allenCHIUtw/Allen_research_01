@@ -1,0 +1,316 @@
+<title>6-DoF Deblur Build Order</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+:root{
+  --paper:#f4f6f8; --surface:#ffffff; --surface-2:#eaeef2;
+  --ink:#161c24; --ink-2:#3d4753; --muted:#6b7684;
+  --line:#d6dce3; --line-soft:#e4e9ee;
+  --traj:#c2660c; --traj-soft:#fbf0e2;
+  --depth:#22707f; --depth-soft:#e2f0f2;
+  --gate:#a8253a; --gate-soft:#fbe9ec;
+  --shadow:0 1px 2px rgba(22,28,36,.06),0 8px 24px rgba(22,28,36,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0f1319; --surface:#161c24; --surface-2:#1d242e;
+    --ink:#e8ecf1; --ink-2:#c3cbd5; --muted:#8b96a4;
+    --line:#2b333e; --line-soft:#222a34;
+    --traj:#e2952f; --traj-soft:#2a1f11;
+    --depth:#4fb6c8; --depth-soft:#11262b;
+    --gate:#e0697f; --gate-soft:#2b1319;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f1319; --surface:#161c24; --surface-2:#1d242e;
+  --ink:#e8ecf1; --ink-2:#c3cbd5; --muted:#8b96a4;
+  --line:#2b333e; --line-soft:#222a34;
+  --traj:#e2952f; --traj-soft:#2a1f11;
+  --depth:#4fb6c8; --depth-soft:#11262b;
+  --gate:#e0697f; --gate-soft:#2b1319;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:"Source Serif 4",Georgia,serif;
+  font-size:16.5px;line-height:1.62;margin:0;padding:0 20px 96px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:830px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3,.ui{font-family:"IBM Plex Sans",system-ui,sans-serif}
+h1{font-size:2.15rem;line-height:1.12;font-weight:600;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font-size:1.16rem;font-weight:600;letter-spacing:-.005em;margin:0;text-wrap:balance}
+h3{font-size:1rem;font-weight:600;margin:0}
+p{margin:0}
+a{color:var(--depth)}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.86em}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:.7rem;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+header{padding-top:56px;display:flex;flex-direction:column;gap:14px;
+  border-bottom:1px solid var(--line);padding-bottom:32px}
+.sub{color:var(--ink-2);font-size:1.06rem;max-width:62ch}
+.settled{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--depth);
+  border-radius:3px;padding:18px 22px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
+.settled ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px}
+.settled li{font-size:.94rem;color:var(--ink-2)}
+.settled li b{color:var(--ink);font-weight:600;font-family:"IBM Plex Sans",sans-serif;font-size:.92rem}
+.mapbox{overflow-x:auto;padding:4px 0}
+svg.map{display:block;min-width:660px;width:100%;height:auto}
+section{display:flex;flex-direction:column;gap:20px}
+.sechead{display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--line-soft);padding-bottom:12px}
+.stages{display:flex;flex-direction:column;gap:12px}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+  box-shadow:var(--shadow);display:grid;grid-template-columns:80px 1fr;overflow:hidden}
+.tag{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding:18px 0;gap:3px;font-family:"IBM Plex Mono",monospace;
+  background:var(--traj-soft);border-right:1px solid var(--line-soft)}
+.stage.d .tag{background:var(--depth-soft)}
+.tag b{font-size:1.02rem;font-weight:500;letter-spacing:.02em;color:var(--traj)}
+.stage.d .tag b{color:var(--depth)}
+.tag em{font-style:normal;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.body{padding:17px 22px;display:flex;flex-direction:column;gap:9px}
+.body p{font-size:.95rem;color:var(--ink-2)}
+.body ul{margin:0;padding-left:17px;display:flex;flex-direction:column;gap:5px}
+.body li{font-size:.92rem;color:var(--ink-2)}
+.gate{margin-top:3px;background:var(--gate-soft);border-left:2px solid var(--gate);
+  padding:10px 14px;border-radius:0 3px 3px 0;font-size:.9rem;color:var(--ink-2)}
+.gate b{font-family:"IBM Plex Sans",sans-serif;font-size:.68rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--gate);display:block;margin-bottom:3px;font-weight:600}
+.pivot{border-color:var(--gate);border-width:1.5px}
+.math{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:3px;
+  padding:15px 19px;font-family:"IBM Plex Mono",monospace;font-size:.83rem;
+  color:var(--ink);overflow-x:auto;line-height:1.8;white-space:pre}
+.math .c{color:var(--muted)}
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:3px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-family:"IBM Plex Sans",sans-serif;font-size:.87rem}
+th{text-align:left;padding:11px 16px;font-weight:600;font-size:.68rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 16px;border-bottom:1px solid var(--line-soft);color:var(--ink-2);font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+td.num,td.k{font-family:"IBM Plex Mono",monospace}
+td.k{color:var(--ink)}
+td.ok{color:var(--depth);font-weight:500}
+td.no{color:var(--gate);font-weight:500}
+.traps{display:flex;flex-direction:column;gap:11px}
+.trap{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:baseline;
+  padding-bottom:11px;border-bottom:1px solid var(--line-soft);font-size:.94rem;color:var(--ink-2)}
+.trap:last-child{border-bottom:none;padding-bottom:0}
+.trap b{font-family:"IBM Plex Sans",sans-serif;font-weight:600;color:var(--ink);font-size:.9rem;white-space:nowrap}
+.trap.hot b{color:var(--gate)}
+footer{border-top:1px solid var(--line);padding-top:22px;color:var(--muted);font-size:.86rem}
+@media (max-width:620px){
+  h1{font-size:1.7rem}
+  .stage{grid-template-columns:64px 1fr}
+  .trap{grid-template-columns:1fr;gap:3px}
+}
+.stage{transition:border-color .15s ease}
+@media (prefers-reduced-motion:reduce){.stage{transition:none}}
+.stage:hover{border-color:var(--muted)}
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Full walkthrough &middot; revision 3</span>
+  <h1>6-DoF Deblur Build Order</h1>
+  <p class="sub">End-to-end research plan: EuRoC as the trajectory and geometry source, synthesis for images, exposure-time estimation as the contribution. Every phase has a gate that can stop it.</p>
+</header>
+
+<div class="settled">
+  <span class="eyebrow">Settled — do not relitigate</span>
+  <ul>
+    <li><b>Data.</b> EuRoC V1/V2 supplies real drone trajectories, hardware-synced IMU, 6-DoF Vicon pose, and a Leica room scan. It does <em>not</em> supply sharp images, exposure time, or rolling shutter — and those three are exactly what a renderer sets itself.</li>
+    <li><b>Never deblur your own ground truth.</b> Sharp GT comes from synthesis, never from IMU-deblurring EuRoC frames. See the traps below.</li>
+    <li><b>Global shutter for paper one.</b> Rolling shutter is a second paper with its own data.</li>
+    <li><b>Classical before learned.</b> The optimisation pipeline is the baseline, the debugger, and the data generator.</li>
+    <li><b>The contribution is exposure time.</b> Joint estimation of &tau;, t<sub>offset</sub> and the trajectory, with the identifiability argument for why one image alone cannot do it.</li>
+  </ul>
+</div>
+
+<section>
+  <div class="sechead">
+    <span class="eyebrow">Shape of the work</span>
+    <h2>Eight phases, two gates, two papers</h2>
+  </div>
+  <div class="mapbox">
+    <svg class="map" viewBox="0 0 700 130" role="img" aria-label="Eight phases P0 to P7 in sequence, with go-no-go gates after P3 and P5, and the paper one and paper two split after P6.">
+      <line x1="30" y1="58" x2="672" y2="58" stroke="var(--line)" stroke-width="1"/>
+      <g font-family="IBM Plex Mono, monospace" font-size="10.5" text-anchor="middle">
+        <g fill="var(--traj)">
+          <circle cx="30" cy="58" r="5"/><circle cx="122" cy="58" r="5"/><circle cx="214" cy="58" r="5"/>
+          <circle cx="398" cy="58" r="5"/><circle cx="582" cy="58" r="5"/><circle cx="672" cy="58" r="5"/>
+        </g>
+        <circle cx="306" cy="58" r="7.5" fill="var(--gate)"/>
+        <circle cx="490" cy="58" r="7.5" fill="var(--gate)"/>
+        <g fill="var(--ink-2)">
+          <text x="30" y="40">P0</text><text x="122" y="40">P1</text><text x="214" y="40">P2</text>
+          <text x="306" y="36">P3</text><text x="398" y="40">P4</text><text x="490" y="36">P5</text>
+          <text x="582" y="40">P6</text><text x="672" y="40">P7</text>
+        </g>
+        <g fill="var(--muted)" font-size="8.5" letter-spacing=".5">
+          <text x="30" y="78">model</text><text x="122" y="78">synth</text><text x="214" y="78">audit</text>
+          <text x="398" y="78">curve</text><text x="582" y="78">learn</text><text x="672" y="78">real GT</text>
+        </g>
+        <g fill="var(--gate)" font-size="8.5" letter-spacing=".6">
+          <text x="306" y="80">NON-BLIND</text><text x="306" y="92">go / no-go</text>
+          <text x="490" y="80">EXPOSURE</text><text x="490" y="92">the result</text>
+        </g>
+      </g>
+      <line x1="627" y1="46" x2="627" y2="70" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2 2"/>
+      <text x="627" y="118" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="8.5"
+            letter-spacing=".6" fill="var(--muted)">paper 1  |  paper 2</text>
+    </svg>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <span class="eyebrow">Phases</span>
+    <h2>The walkthrough</h2>
+  </div>
+  <div class="stages">
+
+    <div class="stage">
+      <div class="tag"><b>P0</b><em>wk 1–3</em></div>
+      <div class="body">
+        <h3>Foundations and data unpacking</h3>
+        <ul>
+          <li>Unpack <code>V1_01_easy.zip</code> and verify what the docs don't: the point-cloud path (community convention is <code>mav0/pointcloud0/data.ply</code>, unconfirmed) and the <code>state_groundtruth_estimate0</code> rate.</li>
+          <li>Build the loader: Vicon pose + 200 Hz IMU + Leica room scan, all in one coordinate convention. Write the frame-convention test <em>first</em> — this is where silent sign errors live.</li>
+          <li>Extend <code>pmbm6</code>: occlusion-aware z-buffered scatter, saturation R(&middot;), sensor noise, and the rolling-shutter path (built now, used in P7).</li>
+        </ul>
+        <div class="gate"><b>Gate</b>Adjoint test at 10<sup>-16</sup>. A planted twist recovers within the predicted covariance. Rendered depth from the Leica scan reprojects onto real EuRoC frames with edges aligned.</div>
+      </div>
+    </div>
+
+    <div class="stage d">
+      <div class="tag"><b>P1</b><em>wk 3–6</em></div>
+      <div class="body">
+        <h3>The synthesiser — your central asset</h3>
+        <p>Everything downstream depends on this, so it gets three weeks rather than a weekend.</p>
+        <ul>
+          <li><b>Sharp latents:</b> frames from V1_01 / V2_01 where motion is slowest. These keep EuRoC's real texture, sensor noise and photometrics, which a COCO image does not have.</li>
+          <li><b>Trajectories:</b> real Vicon segments of length &tau;, resampled from the 200 Hz IMU. This is the whole point — real drone dynamics, not hand tremor.</li>
+          <li><b>Depth:</b> render the Leica scan through the Vicon pose to get a per-frame depth map.</li>
+          <li><b>Controls:</b> &tau;, &alpha;, noise level, saturation, and a virtual camera orientation — so you can render a <em>nadir</em> view from the same room scan and compare against forward-facing.</li>
+        </ul>
+        <div class="gate"><b>Gate</b>Round-trip: plant &xi;, render, re-estimate. Recovery within the covariance predicted from the Fisher matrix. If it isn't, the renderer is wrong, not the estimator.</div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="tag"><b>P2</b><em>wk 6–7</em></div>
+      <div class="body">
+        <h3>Information audit</h3>
+        <p>Compute the weighted Fisher matrix using the sharp image's structure tensor and the depth variance, per envelope, on real EuRoC geometry.</p>
+        <div class="math">Σ<span class="c">ₚ</span> = σ²<span class="c">meas</span>·I + σ²<span class="c">ρ,p</span>·(τ·A<span class="c">ₚ</span>ν)(τ·A<span class="c">ₚ</span>ν)ᵀ
+ℱ  = Σ<span class="c">ₚ</span> L<span class="c">ₚ</span>ᵀ Σ<span class="c">ₚ</span>⁻¹ L<span class="c">ₚ</span>        δξ<span class="c">worst</span> = σ<span class="c">meas</span> / σ<span class="c">min</span>(𝕃)
+<span class="c">// rotation columns carry no Z — ω is immune to depth error</span></div>
+        <div class="gate"><b>Gate</b>EuRoC's camera is forward-facing, so <b>surge sits on the optical axis</b> — the envelope with no rotational proxy and no <em>f</em> amplification. Decide here whether to render nadir instead, or to drop metric surge from your claims. Cheap now, expensive later.</div>
+      </div>
+    </div>
+
+    <div class="stage pivot">
+      <div class="tag"><b>P3</b><em>wk 7–11</em></div>
+      <div class="body">
+        <h3>Non-blind deconvolution — the project pivot</h3>
+        <p>Simplest complete pipeline: &xi; handed over by the gyro, solve for <em>u</em> only, TV prior, linearised ADMM. Run it three ways — rotation-only, 6-DoF with Leica depth, 6-DoF with a degraded depth map — so depth quality is isolated from model class.</p>
+        <div class="gate"><b>Gate — go / no-go for the whole project</b>Sweep &lambda; and run the whiteness test. <strong>Does 6-DoF whiten the residual where rotation-only cannot?</strong> If rotation-only already whitens on EuRoC geometry, your premise is weaker than assumed — stop and reconsider before building anything else. Respect the one-sidedness: conclude "inadequate" only if <em>no</em> &lambda; whitens.</div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="tag"><b>P4</b><em>wk 11–13</em></div>
+      <div class="body">
+        <h3>Bandlimited SE(3) trajectory</h3>
+        <p>Take the PSD of EuRoC's own 200 Hz gyro — measure f<sub>max</sub>, don't guess it — and set the curve degree from <code>K ≳ 2·f_max·τ + 1</code>. Cubic B-spline on SE(3). Decouple the quadrature count T from the parameter count K: use T ≳ blur extent in pixels so PSFs come out as streaks, not dotted lines.</p>
+        <div class="gate"><b>Gate</b>The curve reproduces the Vicon trajectory to sub-pixel in the <code>G = ΣLᵀL</code> metric — not Euclidean on Euler angles.</div>
+      </div>
+    </div>
+
+    <div class="stage pivot">
+      <div class="tag"><b>P5</b><em>wk 13–19</em></div>
+      <div class="body">
+        <h3>Exposure time and timing offset — the contribution</h3>
+        <ul>
+          <li><b>Two routes:</b> gyro-anchored, &tau; = extent / (f·|&omega;|); and the blur-to-flow ratio, &tau;/T<sub>frame</sub> = extent / flow. At EuRoC's 20 fps the inter-frame flow is ~45.8 px against ~9.2 px of blur, so the ratio is well conditioned.</li>
+          <li><b>The stereo trick:</b> EuRoC's documented flaw is that the two cameras auto-expose independently. Both see the same &omega;, so the ratio of their blur extents <em>is</em> &tau;<sub>0</sub>/&tau;<sub>1</sub>, trajectory cancelled. Cross-check it against the brightness ratio — a validation signal that needs no ground truth, available only because of a dataset defect.</li>
+          <li><b>Then t<sub>offset</sub>:</b> 2-D whiteness sweep over (&tau;, t<sub>offset</sub>). EuRoC is hardware-triggered so this should come out near zero — which makes it a clean sanity check on your estimator.</li>
+        </ul>
+        <div class="gate"><b>Gate</b>EuRoC cannot validate &tau; — it has no exposure metadata in any form. Validate on <b>TUM VI</b> (per-frame exposure in ns) and <b>BSD</b> (controlled 1–24 ms), match or beat Korčák &amp; Matas, then <em>apply</em> to EuRoC. If it doesn't hold up on TUM VI, the contribution isn't there.</div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="tag"><b>P6</b><em>wk 19–27</em></div>
+      <div class="body">
+        <h3>The learned model</h3>
+        <p>Architecture follows the maths, not convention:</p>
+        <ul>
+          <li>Predict <b>curve coefficients</b> (~18–30 numbers), not T free poses. The parameterisation is the inductive bias and this is the highest-leverage choice.</li>
+          <li><b>Condition on the IMU</b> — feed the gyro segment alongside the image. That breaks the &tau; degeneracy inside the network instead of hoping it learns something provably absent from the image.</li>
+          <li>Predict the <b>residual</b> from the IMU trajectory, not the absolute. Easier problem, graceful degradation.</li>
+          <li>Supervise with <code>min(d(ξ,ξ′), d(ξ,−ξ′))</code> under <b>G</b>. Never EMD — it is exactly zero for every permutation, so it cannot teach ordering.</li>
+          <li>Drop the roll / pitch-yaw branch split: roll and &nu;<sub>z</sub> share the same ∝r radial profile.</li>
+        </ul>
+        <div class="gate"><b>Gate</b>Does the learned prior beat BM3D <em>given that the IMU already supplies the trajectory</em>? If not, publish the classical pipeline and say so — that is a finding, not a failure.</div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="tag"><b>P7</b><em>wk 27–31</em></div>
+      <div class="body">
+        <h3>Real-data validation, then rolling shutter</h3>
+        <p>Everything to this point is synthetic. Close it out on data you did not generate: <b>Köhler</b> (the only real set with GT camera trajectory), <b>RealBlur</b>, and <b>Gen3-DroneFlight</b> (real drone, sharp GT, mocap, exposure explicitly set to 10/30/50 ms).</p>
+        <p>Rolling shutter starts here as paper two: simulate for development since you control &alpha;, then validate on <b>WHU-RSVI</b> (RS + IMU, readout time published) or <b>BS-RSCD</b> (RS + blur + sharp GT). Calibrate &alpha; on hardware by photographing a mains-flicker LED — the banding period gives the line time directly.</p>
+        <div class="gate"><b>Gate</b>Check separately whether the RS shear is being absorbed into <em>u</em>. That failure is invisible to PSNR and fatal for photogrammetry.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <span class="eyebrow">Named now, so they cannot surprise you</span>
+    <h2>Traps</h2>
+  </div>
+  <div class="traps">
+    <div class="trap hot"><b>Circular ground truth</b><span>If you deblur EuRoC with your model and call the output sharp GT, you are measuring how well your method reproduces itself. Every systematic error — wrong &tau;, missing &nu;<sub>z</sub>, unmodelled parallax — becomes permanently undetectable, and a network trained on it learns your errors as physics. IMU-deblurred frames are acceptable as <em>pseudo-labels for pretraining</em> only, with final evaluation on real pairs.</span></div>
+    <div class="trap"><b>V1_01_easy orientation GT</b><span>Known to be wrong. OpenVINS ships a corrected version from their <code>vicon2gt</code> tool. The images are fine — only the rotation ground truth is bad, and rotation is what you're estimating.</span></div>
+    <div class="trap"><b>Vicon has no device timestamps</b><span>Officially acknowledged. Sync between sensor data and motion GT is limited by separate recording systems. Hand-eye and time alignment is a real preprocessing step, not a formality.</span></div>
+    <div class="trap"><b>Coordinate conventions differ</b><span>Ground truth, IMU and camera frames use different axis conventions — evo warns about this explicitly. In interaction-matrix work a sign error is silent and looks like a modelling failure.</span></div>
+    <div class="trap"><b>Machine Hall is position-only</b><span>Leica laser tracker, 3-DoF, and no room scan. Use V1/V2 for anything trajectory-related. MH sequences also open with the MAV being picked up and set down — skip that segment.</span></div>
+    <div class="trap"><b>&nu;<sub>z</sub> conditioning</b><span>Forward flight gives radial displacement with no <em>f</em> amplification: ~1.2 px against ~9 px for yaw. The most-used axis is the least-encoded one, and it is confusable with defocus. Don't promise metric forward velocity.</span></div>
+    <div class="trap"><b>Soft depth boundaries</b><span>Whenever you swap the Leica scan for a learned depth map, occlusion boundaries go soft where true depth is discontinuous. With a z-buffered scatter, that is where artefacts appear — and it is the one place existing theory gives no cover.</span></div>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <span class="eyebrow">Reference</span>
+    <h2>EuRoC numbers you'll need</h2>
+  </div>
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>Quantity</th><th>Value</th><th>Consequence</th></tr></thead>
+      <tbody>
+        <tr><td>cam0 intrinsics</td><td class="k">f<sub>x</sub> 458.65, f<sub>y</sub> 457.30, c 367.22 / 248.38</td><td>HFOV ≈ 79°</td></tr>
+        <tr><td>Distortion (radtan)</td><td class="k">−0.28341, 0.07396, 1.94e−4, 1.76e−5</td><td>undistort before eq. (23)</td></tr>
+        <tr><td>Stereo baseline</td><td class="k">110.1 mm</td><td>metric depth available</td></tr>
+        <tr><td>Frame rate</td><td class="k">20 fps → 50 ms period</td><td>blur-to-flow ratio ≈ 0.2</td></tr>
+        <tr><td>Gyro noise density</td><td class="k">1.6968e−4 rad/s/√Hz</td><td class="ok">0.008 px over 10 ms</td></tr>
+        <tr><td>Gyro random walk</td><td class="k">1.9393e−5</td><td class="ok">0.046 px at 0.01 rad/s bias</td></tr>
+        <tr><td>Accel noise density</td><td class="k">2.0e−3 m/s²/√Hz</td><td class="ok">negligible over τ</td></tr>
+        <tr><td>Crossover depth Z*</td><td class="k">f·v·τ = 9.16 m</td><td>below it, depth is needed <em>and</em> measurable</td></tr>
+        <tr><td>Depth tolerance</td><td class="k">11% at 2 m, 27% at 5 m</td><td>δZ/Z &lt; 0.5·Z/(f·v·τ)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="color:var(--ink-2);font-size:.93rem">The gyro rows are the ones that matter most: the IMU contributes three orders of magnitude less error than your 0.5 px kernel noise floor, so gyro-anchoring — the load-bearing assumption of the whole plan — is comfortably valid on this data.</p>
+</section>
+
+<footer>
+  Companion material: <code>MATH_FOUNDATION.md</code>, the 6-DoF addendum (§13–§23), and <code>pmbm6/</code>.
+  Start with P0's frame-convention test and unzipping V1_01 — a day's work, and it settles two things the documentation cannot.
+</footer>
+
+</div>
